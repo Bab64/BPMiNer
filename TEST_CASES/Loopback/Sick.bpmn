@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0oah53t" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="8.8.2">
+  <bpmn:process id="Process_16ksy2k" isExecutable="false">
+    <bpmn:endEvent id="Event_1bxpy3i" name="End that is not really an end!">
+      <bpmn:incoming>Flow_0707j0z</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0707j0z" name="Doctor: common medicine" sourceRef="Gateway_0pg7xml" targetRef="Event_1bxpy3i" />
+    <bpmn:startEvent id="Event_1g57fl5" name="Person">
+      <bpmn:outgoing>Flow_154lw0s</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0ohxmq3" sourceRef="Event_06r3ymo" targetRef="Gateway_0pg7xml" />
+    <bpmn:sequenceFlow id="Flow_1c5eafc" name="Internet: alternative medicine" sourceRef="Gateway_0pg7xml" targetRef="Event_06r3ymo" />
+    <bpmn:intermediateCatchEvent id="Event_06r3ymo" name="Sick?">
+      <bpmn:incoming>Flow_1c5eafc</bpmn:incoming>
+      <bpmn:incoming>Flow_154lw0s</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ohxmq3</bpmn:outgoing>
+      <bpmn:conditionalEventDefinition id="ConditionalEventDefinition_0tz0q7f">
+        <bpmn:condition xsi:type="bpmn:tFormalExpression" />
+      </bpmn:conditionalEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_154lw0s" sourceRef="Event_1g57fl5" targetRef="Event_06r3ymo" />
+    <bpmn:parallelGateway id="Gateway_0pg7xml" name="Try several strategies">
+      <bpmn:incoming>Flow_0ohxmq3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0707j0z</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1c5eafc</bpmn:outgoing>
+    </bpmn:parallelGateway>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_16ksy2k">
+      <bpmndi:BPMNEdge id="Flow_154lw0s_di" bpmnElement="Flow_154lw0s">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="242" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c5eafc_di" bpmnElement="Flow_1c5eafc">
+        <di:waypoint x="380" y="145" />
+        <di:waypoint x="380" y="180" />
+        <di:waypoint x="260" y="180" />
+        <di:waypoint x="260" y="138" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="294" y="186" width="51" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ohxmq3_di" bpmnElement="Flow_0ohxmq3">
+        <di:waypoint x="278" y="120" />
+        <di:waypoint x="355" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0707j0z_di" bpmnElement="Flow_0707j0z">
+        <di:waypoint x="405" y="120" />
+        <di:waypoint x="502" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="410" y="86" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1g57fl5_di" bpmnElement="Event_1g57fl5">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="153" y="145" width="35" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_03lsnk6_di" bpmnElement="Event_06r3ymo">
+        <dc:Bounds x="242" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="247" y="72" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1saie35_di" bpmnElement="Gateway_0pg7xml">
+        <dc:Bounds x="355" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="353" y="65" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1bxpy3i_di" bpmnElement="Event_1bxpy3i">
+        <dc:Bounds x="502" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="485" y="145" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

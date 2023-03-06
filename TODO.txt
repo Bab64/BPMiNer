@@ -1,0 +1,13 @@
+- 'Business_as_usual_.bpmn' : tâche sans "outgoing flow" dans sous-processus -> le tooltip n'est pas "'click' on outgoing seq. flow"
+- 'Weird__.bpmn' : bug
+- 2 sequence flows en sortie d'une activité induisent du parallélisme implicite alors que livebpmn.com considère
+une exclusion entre les 2 flots. Plus généralement, s'il y a plus de 2 conditional sequence flows à
+la sortie d'une activité, il y a du parallélisme potentiellement implicite. Le diagramme avec "business rules task"
+et une synchronisation gateway inclusive plante... A améliorer...
+- Erreur sémantique : un message envoyé dans un sous-process ne peut pas être capturé en frontière de ce sous-process :
+re-tester les diagrammes avec beacoup de communication (ThrowCatch.bpmn)
+- revoir Car.bpmn et train.bpmn sur les jonctions inclusives
+
+- Zoom avec molette
+- Ver. parallèle de 'A.2.1.bpmn'
+

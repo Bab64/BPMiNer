@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns="http://www.omg.org/bpmn20" xmlns:bpsim="http://www.bpsim.org/schemas/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color" xmlns:drools="http://www.jboss.org/drools" id="_ilctsOGmEeiAgNmCMpcbQw" targetNamespace="http://www.omg.org/bpmn20" expressionLanguage="http://www.mvel.org/2.0" typeLanguage="http://www.java.com/javaTypes" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="9.1.0" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd http://www.jboss.org/drools drools.xsd http://www.bpsim.org/schemas/1.0 bpsim.xsd">
+  <bpmn2:itemDefinition id="_displayed_messageItem" structureRef="String" />
+  <bpmn2:itemDefinition id="_30781f1f-c2f9-342c-ab1a-d2f6f35a51dbType" />
+  <bpmn2:message id="_3a75f49b-35d2-3f0b-bcb6-4251c96d395d" name="_30781f1f-c2f9-342c-ab1a-d2f6f35a51db" itemRef="_30781f1f-c2f9-342c-ab1a-d2f6f35a51dbType" />
+  <bpmn2:collaboration id="Collaboration_14uarne">
+    <bpmn2:participant id="Participant_0ppag6v" processRef="Process11ty01er63" />
+    <bpmn2:participant id="Participant_11o2fgh" processRef="Process_1yo3q99" />
+    <bpmn2:participant id="Participant_19zm377" processRef="Process_1f7yi68" />
+  </bpmn2:collaboration>
+  <bpmn2:process id="Process11ty01er63">
+    <bpmn2:property id="displayed_message" itemSubjectRef="_displayed_messageItem" />
+    <bpmn2:endEvent id="Event_09g8rhi">
+      <bpmn2:incoming>Flow_07uah4n</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_07uah4n" sourceRef="Event_1d8ti86" targetRef="Event_09g8rhi" />
+    <bpmn2:startEvent id="Event_1d8ti86">
+      <bpmn2:outgoing>Flow_07uah4n</bpmn2:outgoing>
+      <bpmn2:messageEventDefinition id="MessageEventDefinition_04ake4p" />
+    </bpmn2:startEvent>
+  </bpmn2:process>
+  <bpmn2:process id="Process_1yo3q99">
+    <bpmn2:startEvent id="Event_1ueoe0m">
+      <bpmn2:outgoing>Flow_07drbqp</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:sequenceFlow id="Flow_07drbqp" sourceRef="Event_1ueoe0m" targetRef="Event_0sqcu8n" />
+    <bpmn2:endEvent id="Event_0sqcu8n" name="Hello B--Di!">
+      <bpmn2:incoming>Flow_07drbqp</bpmn2:incoming>
+      <bpmn2:messageEventDefinition id="MessageEventDefinition_0ib0zzt" />
+    </bpmn2:endEvent>
+  </bpmn2:process>
+  <bpmn2:process id="Process_1f7yi68">
+    <bpmn2:startEvent id="Event_10q8p4p">
+      <bpmn2:outgoing>Flow_1u08o9m</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:endEvent id="Event_1y7u1o5">
+      <bpmn2:incoming>Flow_03ypogg</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:intermediateCatchEvent id="Event_0org3xd">
+      <bpmn2:incoming>Flow_1u08o9m</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_03ypogg</bpmn2:outgoing>
+      <bpmn2:messageEventDefinition id="MessageEventDefinition_141qkd7" />
+    </bpmn2:intermediateCatchEvent>
+    <bpmn2:sequenceFlow id="Flow_1u08o9m" sourceRef="Event_10q8p4p" targetRef="Event_0org3xd" />
+    <bpmn2:sequenceFlow id="Flow_03ypogg" sourceRef="Event_0org3xd" targetRef="Event_1y7u1o5" />
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="_ilcttOGmEeiAgNmCMpcbQw">
+    <bpmndi:BPMNPlane id="_ilctteGmEeiAgNmCMpcbQw" bpmnElement="Collaboration_14uarne">
+      <bpmndi:BPMNShape id="Participant_0ppag6v_di" bpmnElement="Participant_0ppag6v" isHorizontal="true">
+        <dc:Bounds x="140" y="50" width="440" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_07uah4n_di" bpmnElement="Flow_07uah4n">
+        <di:waypoint x="238" y="110" />
+        <di:waypoint x="512" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_09g8rhi_di" bpmnElement="Event_09g8rhi">
+        <dc:Bounds x="512" y="92" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="515" y="135" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01hwl3h_di" bpmnElement="Event_1d8ti86">
+        <dc:Bounds x="202" y="92" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="196" y="135" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_11o2fgh_di" bpmnElement="Participant_11o2fgh" isHorizontal="true">
+        <dc:Bounds x="140" y="200" width="440" height="110" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_07drbqp_di" bpmnElement="Flow_07drbqp">
+        <di:waypoint x="238" y="250" />
+        <di:waypoint x="352" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1ueoe0m_di" bpmnElement="Event_1ueoe0m">
+        <dc:Bounds x="202" y="232" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="208" y="275" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ka7wyl_di" bpmnElement="Event_0sqcu8n">
+        <dc:Bounds x="352" y="232" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="341" y="283" width="57" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_19zm377_di" bpmnElement="Participant_19zm377" isHorizontal="true">
+        <dc:Bounds x="140" y="339" width="440" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_03ypogg_di" bpmnElement="Flow_03ypogg">
+        <di:waypoint x="388" y="389" />
+        <di:waypoint x="512" y="389" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1u08o9m_di" bpmnElement="Flow_1u08o9m">
+        <di:waypoint x="238" y="389" />
+        <di:waypoint x="352" y="389" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_10q8p4p_di" bpmnElement="Event_10q8p4p">
+        <dc:Bounds x="202" y="371" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="203" y="414" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1y7u1o5_di" bpmnElement="Event_1y7u1o5">
+        <dc:Bounds x="512" y="371" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="515" y="414" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1hblsbn_di" bpmnElement="Event_0org3xd">
+        <dc:Bounds x="352" y="371" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="346" y="414" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmn2:relationship id="_ilctu-GmEeiAgNmCMpcbQw" type="BPSimData">
+    <bpmn2:extensionElements>
+      <bpsim:BPSimData>
+        <bpsim:Scenario id="default" name="Simulationscenario">
+          <bpsim:ScenarioParameters baseTimeUnit="min" />
+          <bpsim:ElementParameters elementRef="_190BD864-D5C4-457B-BCF7-A33BE5073DA6" id="_ilctvOGmEeiAgNmCMpcbQw">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:UniformDistribution max="10.0" min="5.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="_89F2F494-510A-456B-A1E1-A46E56F529A8" id="_ilctveGmEeiAgNmCMpcbQw">
+            <bpsim:ControlParameters>
+              <bpsim:Probability>
+                <bpsim:FloatingParameter value="100.0" />
+              </bpsim:Probability>
+            </bpsim:ControlParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="_D1AC8E3C-FAB7-4FA1-9075-1764D4ACCB68" id="_ilctvuGmEeiAgNmCMpcbQw">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:UniformDistribution max="10.0" min="5.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+            <bpsim:ControlParameters>
+              <bpsim:Probability>
+                <bpsim:FloatingParameter value="100.0" />
+              </bpsim:Probability>
+            </bpsim:ControlParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="_E50B8E99-5BF3-4106-B918-DFB9E8AA2345" id="_ilctv-GmEeiAgNmCMpcbQw">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:UniformDistribution max="10.0" min="5.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+            <bpsim:CostParameters>
+              <bpsim:UnitCost>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:UnitCost>
+            </bpsim:CostParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="_3BBB9D9E-8693-4A15-AB18-1D6F4562202C" id="_ilctwOGmEeiAgNmCMpcbQw">
+            <bpsim:ControlParameters>
+              <bpsim:Probability>
+                <bpsim:FloatingParameter value="100.0" />
+              </bpsim:Probability>
+            </bpsim:ControlParameters>
+          </bpsim:ElementParameters>
+        </bpsim:Scenario>
+      </bpsim:BPSimData>
+    </bpmn2:extensionElements>
+    <bpmn2:source>_ilctsOGmEeiAgNmCMpcbQw</bpmn2:source>
+    <bpmn2:target>_ilctsOGmEeiAgNmCMpcbQw</bpmn2:target>
+  </bpmn2:relationship>
+</bpmn2:definitions>
