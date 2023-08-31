@@ -79,7 +79,7 @@
 }
 
 html, body, #LiveBPMN {
-    background-color: #F2F8F1;
+    background-color: #ECFFDC; /* #F2F8F1; */
     height: 100%;
     padding: 0;
     margin: 0;

@@ -7,8 +7,12 @@
     "outDir": "js",
     "sourceMap": true,
     "strict": true,
-    "target": "ES2017"
-//    "traceResolution": true
+    "target": "ES2017",
+//    "traceResolution": true,
+    "typeRoots": [ // https://www.typescriptlang.org/tsconfig#typeRoots
+      "ts/typings",
+      "node_modules/@types" // By default, it must be "regenerated"!
+    ]
   },
   "include": [
     "ts/**/*"

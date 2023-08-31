@@ -36,7 +36,8 @@ const state_machine = new BOUNDARY_EVENTS.Statechart(
                                     {
                                         event: 'c',
                                         target: 'C'
-                                    }],
+                                    }
+                                ]
                             },
                             {
                                 id: 'A'
@@ -76,7 +77,7 @@ const state_machine = new BOUNDARY_EVENTS.Statechart(
                                 ]
                             },
                             {
-                                id: "B"
+                                id: 'B'
                             }
                         ]
                     }

@@ -130,11 +130,11 @@
         </bpmn:serviceTask>
         <bpmn:sequenceFlow id="EAID_19B7EC97_71D2_467e_9B21_9A4C36AC7B50" sourceRef="EAID_1E455752_F4DC_4dbf_936F_42423B73EE9D" targetRef="EAID_01DF5A98_3923_4199_8B31_0DA78596AB7E" isImmediate="true"/>
         <bpmn:sequenceFlow id="EAID_A464FA66_7E8B_4748_82FA_4E74FD49C350" sourceRef="EAID_DA54FCFA_83AA_46f4_A4B9_4767979C0222" targetRef="EAID_1E455752_F4DC_4dbf_936F_42423B73EE9D"/>
-        <bpmn:boundaryEvent id="EAID_CC286C10_6BCA_425d_A4C3_B3DB80733BBD" attachedToRef="EAID_F50552B9_B54D_4207_A02C_605F2BF0DC5A" cancelActivity="true" parallelMultiple="false">
+        <bpmn:boundaryEvent id="SEND_MMS_FAILS" attachedToRef="EAID_F50552B9_B54D_4207_A02C_605F2BF0DC5A" cancelActivity="true" parallelMultiple="false">
             <bpmn:outgoing>EAID_7D7B15B4_5931_4c11_81C6_34FAC4A5B642</bpmn:outgoing>
             <bpmn:escalationEventDefinition/>
         </bpmn:boundaryEvent>
-        <bpmn:sequenceFlow id="EAID_7D7B15B4_5931_4c11_81C6_34FAC4A5B642" name="failure" sourceRef="EAID_CC286C10_6BCA_425d_A4C3_B3DB80733BBD" targetRef="EAID_98C8A6A8_7542_4623_BC39_AB0F88016500"/>
+        <bpmn:sequenceFlow id="EAID_7D7B15B4_5931_4c11_81C6_34FAC4A5B642" name="failure" sourceRef="SEND_MMS_FAILS" targetRef="EAID_98C8A6A8_7542_4623_BC39_AB0F88016500"/>
         <bpmn:sendTask id="EAID_F50552B9_B54D_4207_A02C_605F2BF0DC5A" name="Send MMS" startQuantity="1" completionQuantity="1" isForCompensation="false" implementation="##unspecified">
             <bpmn:incoming>EAID_13468CC4_2EC0_46ad_A6E8_1E18931DA698</bpmn:incoming>
             <bpmn:incoming>EAID_2FC4A0B1_9A47_492c_98C4_530D63B3BD87</bpmn:incoming>
@@ -501,7 +501,7 @@
                 <dc:Bounds x="293" y="355" width="110" height="60"/>
                 <bpmndi:BPMNLabel id="EAID_LBL000000_B54D_4207_A02C_605F2BF0DC5A" labelStyle="EAID_LS000000_6221_40db_9B47_82788B0873F4"/>
             </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="EAID_DO000047_6221_40db_9B47_82788B0873F4" bpmnElement="EAID_CC286C10_6BCA_425d_A4C3_B3DB80733BBD">
+            <bpmndi:BPMNShape id="EAID_DO000047_6221_40db_9B47_82788B0873F4" bpmnElement="SEND_MMS_FAILS">
                 <dc:Bounds x="283" y="401" width="30" height="30"/>
             </bpmndi:BPMNShape>
             <bpmndi:BPMNEdge id="EAID_DL000000_6221_40db_9B47_82788B0873F4" bpmnElement="EAID_3A6C8100_51D4_4571_A2D4_E8971BD615DE">

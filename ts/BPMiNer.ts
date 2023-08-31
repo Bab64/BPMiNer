@@ -14,14 +14,13 @@ import {
     Sequence_flow
 } from "./BPMN-JS";
 import {SCION} from "./SCION-CORE";
-import Fork = SCION.Fork;
 
 declare const BpmnModdle: any;
 declare const scion: any;
 declare const tippy: any;
 
 /** WebPack configuration (this code does not work in the browser) */
-// import BpmnModdle from "bpmn-moddle"; // "bpmn-moddle.d.ts" required
+// import BpmnModdle from "bpmn-moddle"; // "./ts/typings/bpmn-moddle.d.ts"
 // import * as scion from "scion-core"; // "scion-core.d.ts" required
 // import tippy from 'tippy.js';
 // require('tippy.js/dist/tippy.css');
@@ -41,13 +40,13 @@ enum Validation {
     Activity_suspicious_JOIN_parallelism = "Activity with suspicious JOIN parallelism",
     Activity_Unknown = "Activity type isn't supported or activity configuration is unknown",
 
-    Boundary_event_non_executable_FORK_parallelism = "Boundary event with non-executable FORK parallelism",
+    Boundary_event_implicit_FORK_parallelism = "Boundary event with implicit FORK parallelism",
     Boundary_event_with_incoming_flow = "Boundary event with 'incoming' seq. flow",
     End_event_with_outgoing_flow = "End event with 'outgoing' seq. flow(s)",
     End_event_suspicious_JOIN_parallelism = "End event with suspicious JOIN parallelism",
-    Intermediate_event_non_executable_FORK_parallelism = "Intermediate event with non-executable FORK parallelism",
+    Intermediate_event_implicit_FORK_parallelism = "Intermediate event with implicit FORK parallelism",
     Intermediate_event_suspicious_JOIN_parallelism = "Intermediate event with suspicious JOIN parallelism",
-    Start_event_non_executable_FORK_parallelism = "Start event with non-executable FORK parallelism",
+    Start_event_implicit_FORK_parallelism = "Start event with implicit FORK parallelism",
     Start_event_with_incoming_flow = "Start event with 'incoming' seq. flow",
     Event_Unknown = "Event type isn't supported or event configuration is unknown",
 
@@ -193,6 +192,7 @@ type FORK = Activity | Gateway | 'JOINABLE';
 interface Region_in_parallel extends SCION.State {
     // 'FORK' field is added so that substates can deal with superstates' execution context:
     FORK: FORK; // This is a marker to keep information about what flow object (e.g., gateway) the region in parallel belongs to...
+    parent: SCION.State;
     states: Array<SCION.State>; // Overriding 'states': attribute must exist...
 }
 
@@ -203,9 +203,7 @@ export interface Test_case {
 }
 
 export default class BPMiNer {
-    // Attention, 'dblclick' crée un bug (ici voulu pour les tests)...
-    // Mais il faut remplacer par 'Reload' dans la version de distribution :
-    public static readonly Reload = 'dblclick';
+    public static readonly Reload = 'Reload';
     public static readonly Trace = true; // 'false' dans la version de distribution...
     /** From ver. "version": "1.0.1"
      * When loading a new BPMN file, 'window' listeners remain registered.
@@ -225,7 +223,6 @@ export default class BPMiNer {
     }
 
     /** End from ver. "version": "1.0.1" */
-
     public static readonly File_reader = new FileReader();
 
     public static readonly Drag_and_drop = (): void => {
@@ -344,13 +341,20 @@ export default class BPMiNer {
         ]
     );
 
-    public static Warn(flow_object: Flow_object, text: string): any {
-        return tippy(BPMiNer.Get_SVGGElement(BPMiNer.Get_original_id(flow_object.id)), {
+
+    public static readonly _Warnings = new Array;
+
+    private static _Clear_warnings(): void {
+        BPMiNer._Warnings.forEach(warning => warning.destroy());
+    }
+
+    public static Warn(flow_object: Flow_object, text: string): void {
+        BPMiNer._Warnings.push(tippy(BPMiNer.Get_SVGGElement(BPMiNer.Get_original_id(flow_object.id)), {
             content: text,
             placement: 'right',
             showOnCreate: true,
             theme: "liveBPMN_error"
-        });
+        }));
     }
 
     /**
@@ -369,7 +373,7 @@ export default class BPMiNer {
     // };
 
     private _XML: Promise<string>;
-    get XML() {
+    get XML(): Promise<string> {
         return this._XML;
     }
 
@@ -385,6 +389,7 @@ export default class BPMiNer {
 
         if (BPMiNer.Trace) console.assert(window.document.readyState !== 'loading');
         BPMiNer._Clear_listeners(); // 'window.addEventListener' actions from prior BPMN case must be discarded...
+        BPMiNer._Clear_warnings(); // Remove 'tippy.js' residual tips...
         BPMiNer.Viewer.clear();
         await BPMiNer.Viewer.importXML(XML); // Visualization...
         window.dispatchEvent(new Event('fit-viewport'));
@@ -478,7 +483,12 @@ export default class BPMiNer {
     public static Compute_execution_path(execution_flow: Sequence_flow, flow_object: ModdleElement, status: Activity_status | Event_status | Gateway_status): void {
         const current_execution_path = BPMiNer.Get_current_execution_path(flow_object);
         const next_execution_path = BPMiNer.__Compute_execution_path(execution_flow, flow_object);
-        if (BPMiNer._Is_loopback_(flow_object, execution_flow.sourceRef!)) {
+        if (BPMiNer._Is_loopback_(flow_object, execution_flow.sourceRef!)
+            /* Ver. 1.0.5: 'Loopback_versus_reentrance.bpmn' */
+            // Issue: this is *NOT* a loopback in such a case:
+            && (!BPMiNer.Is_reentered_(execution_flow.sourceRef!)
+                || BPMiNer.Is_reentered_(execution_flow.targetRef!))) {
+            // window.alert(BPMiNer.Get_name_when_possible(execution_flow.sourceRef!) + " -> " + BPMiNer.Get_name_when_possible(execution_flow.targetRef!));
             if (next_execution_path.includes(current_execution_path)
                 || current_execution_path !== BPMiNer.Get_name_when_possible(flow_object)) {
                 // 'Chemistry.bpmn': "Temp. > z?" 2nd round...
@@ -491,6 +501,7 @@ export default class BPMiNer {
                 return;
             }
         }
+        // Not loopback, could be reentrance:
         if (next_execution_path) { // 'next_execution_path' *ISN'T* empty string...
             if (BPMiNer.Is_reentered_(flow_object)) {
                 BPMiNer.Reenter(flow_object);
@@ -648,7 +659,7 @@ export default class BPMiNer {
             if (BPMiNer.Trace) console.assert(BPMiNer.Is_region_in_parallel_(state));
             return state as Region_in_parallel;
         }
-        // return undefined; // Implicit...
+        // 'undefined' implicitly returned
     }
 
     public static Get_state(flow_object: Flow_object, ...states: SCION.State[]): SCION.State | undefined {
@@ -656,12 +667,14 @@ export default class BPMiNer {
             const result = BPMiNer._Get_state(flow_object, state);
             if (result) return result;
         }
-        // return undefined; // Implicit...
+        // 'undefined' implicitly returned -> must be handled in calling execution context...
     }
 
     private static _Get_state(flow_object: Flow_object, state: SCION.State): SCION.State | undefined {
-        if (flow_object.id === state.id || BPMiNer.Create_id_for_non_visual_state_machine_element(flow_object.id) === state.id) return state;
-        if (!state.hasOwnProperty('states')) return undefined;
+        if (flow_object.id === state.id || BPMiNer.Create_id_for_non_visual_state_machine_element(flow_object.id) === state.id)
+            return state;
+        if (!state.hasOwnProperty('states'))
+            return undefined;
         let result = state.states!.find(state => state.id === flow_object.id || state.id === BPMiNer.Create_id_for_non_visual_state_machine_element(flow_object.id));
         if (result)
             return result;
@@ -672,7 +685,7 @@ export default class BPMiNer {
         return result;
     }
 
-    public static Get_superstate(...states: SCION.State[]): SCION.State {
+    public static Get_above_execution_context(...states: SCION.State[]): SCION.State {
         if (BPMiNer.Is_activity_wrapping_(states[states.length - 1]))
             return states[states.length - 1].states![0];
         return states[states.length - 1];
@@ -700,7 +713,7 @@ export default class BPMiNer {
             for (const transition of state.transitions!)
                 if (BPMiNer.Get_original_id(transition.target) === BPMiNer.Get_original_id(target.id))
                     return transition;
-        // return undefined; // Implicit...
+        // 'undefined' implicitly returned
     }
 
     public static Is_activity_forked_(state: SCION.State): boolean {
@@ -802,6 +815,16 @@ export default class BPMiNer {
 
     private static _Is_loopback_(from: ModdleElement, to: ModdleElement): boolean {
         return BPMiNer.Compute_transitive_closure(from).has(to);
+    }
+
+    public static Is_non_interruptible_boundary_event_(event: Event): boolean {
+        const type = BPMiNer.Compute_event_type(event);
+        if (type === Event_type.BPMN_BoundaryCancelEvent || type === Event_type.BPMN_BoundaryErrorEvent)
+            return false;
+        if (type === Event_type.BPMN_BoundaryCompensateEvent)
+            return true;
+        // 'cancelActivity' is used for boundary events while 'isInterrupting' is used for start events in event subprocesses:
+        return 'cancelActivity' in event && !event.cancelActivity!;
     }
 
     public static Is_non_visual_state_id_(id?: string): boolean {
@@ -1445,6 +1468,10 @@ class BPMiNer_process implements SCION.State_machine {
         if (status.validation.has(Validation.Activity_Unknown))
             throw new BPMN_error(activity, ...Array.from(status.validation));
         if (!BPMiNer.Is_start_activity_(me)) {
+            // './TEST_CASES/Loopback/Loopback_versus_reentrance_.bpmn'
+            if (BPMiNer.Get_name_when_possible(activity) === "Send MMS") {
+                let stop = true; // Breakpoint for test only...
+            }
             BPMiNer.Compute_execution_path(me, activity, status);
             if (status.validation.has(Validation.Loopback))
                 return status;
@@ -1594,7 +1621,7 @@ class BPMiNer_process implements SCION.State_machine {
                 return {
                     basic_type: event.$type,
                     type: BPMiNer_process._Compute_event_type(event),
-                    validation: new Set([Validation.Boundary_event_non_executable_FORK_parallelism])
+                    validation: new Set([Validation.Boundary_event_implicit_FORK_parallelism])
                 };
             return {basic_type: event.$type, type: BPMiNer_process._Compute_event_type(event), validation: new Set};
         }
@@ -1624,7 +1651,7 @@ class BPMiNer_process implements SCION.State_machine {
                 return {
                     basic_type: event.$type,
                     type: BPMiNer_process._Compute_event_type(event),
-                    validation: new Set([Validation.Intermediate_event_non_executable_FORK_parallelism])
+                    validation: new Set([Validation.Intermediate_event_implicit_FORK_parallelism])
                 };
             return {basic_type: event.$type, type: BPMiNer_process._Compute_event_type(event), validation: new Set};
         }
@@ -1639,7 +1666,7 @@ class BPMiNer_process implements SCION.State_machine {
                 return {
                     basic_type: event.$type,
                     type: BPMiNer_process._Compute_event_type(event),
-                    validation: new Set([Validation.Start_event_non_executable_FORK_parallelism])
+                    validation: new Set([Validation.Start_event_implicit_FORK_parallelism])
                 };
             return {basic_type: event.$type, type: BPMiNer_process._Compute_event_type(event), validation: new Set};
         }
@@ -1725,7 +1752,7 @@ class BPMiNer_process implements SCION.State_machine {
             throw new BPMN_error(event, ...Array.from(status.validation));
         if (status.validation.has(Validation.Reentrance))
             event_id = event.id;
-        const superstate = BPMiNer.Get_superstate(...states);
+        const superstate = BPMiNer.Get_above_execution_context(...states);
         const event_as_state = this._compute_end_event_as_state(event, event_id, status, superstate);
         this._no_join(execution_flow, states[states.length - 1]);
         return status;
@@ -1818,7 +1845,7 @@ class BPMiNer_process implements SCION.State_machine {
         const event = execution_flow.targetRef!;
         let event_id = event.id;
         const status: Event_status = BPMiNer_process._Validate_event(event);
-        if (status.validation.has(Validation.Intermediate_event_non_executable_FORK_parallelism)
+        if (status.validation.has(Validation.Intermediate_event_implicit_FORK_parallelism)
             || status.validation.has(Validation.Event_Unknown))
             throw new BPMN_error(event, ...Array.from(status.validation));
         BPMiNer.Compute_execution_path(execution_flow, execution_flow.targetRef!, status);
@@ -1826,7 +1853,7 @@ class BPMiNer_process implements SCION.State_machine {
             return status;
         if (status.validation.has(Validation.Reentrance))
             event_id = event.id;
-        const superstate = BPMiNer.Get_superstate(states[states.length - 1]);
+        const superstate = BPMiNer.Get_above_execution_context(states[states.length - 1]);
         const event_as_state: SCION.State = this._compute_intermediate_event_as_state(event, event_id, status, superstate);
         /** Link throw events do not have an 'outgoing' field */
         if (status.type === Event_type.BPMN_IntermediateThrowLinkEvent) {
@@ -1916,12 +1943,16 @@ class BPMiNer_process implements SCION.State_machine {
         if (BPMiNer.Trace) console.assert(BPMiNer.Is_interruptible_boundary_event_(event), "'_compute_interruptible_boundary_event_execution' >> 'BPMiNer.Is_interruptible_boundary_event_(event)', untrue.");
         let event_id = event.id;
         const status = BPMiNer_process._Validate_event(event);
-        if (status.validation.has(Validation.Boundary_event_non_executable_FORK_parallelism)
+        if (status.validation.has(Validation.Boundary_event_implicit_FORK_parallelism)
             || status.validation.has(Validation.Boundary_event_with_incoming_flow)
             || status.validation.has(Validation.Event_Unknown))
             throw new BPMN_error(event, ...Array.from(status.validation));
         BPMiNer.Compute_execution_path(me, event, status);
-        if (BPMiNer.Trace) console.assert(!status.validation.has(Validation.Loopback), "'_compute_interruptible_boundary_event_execution' >> '!status.validation.has(Validation.Loopback)', untrue.");
+        if (status.validation.has(Validation.Loopback)) {
+            // 'Loopback_versus_reentrance_': loopback on boundary event is in fact reentrance...
+            BPMiNer.Reenter(event);
+            status.validation.add(Validation.Reentrance);
+        }
         let click: 'click' | 'dblclick' = 'click';
         if (status.validation.has(Validation.Reentrance))
             event_id = event.id;
@@ -1990,7 +2021,7 @@ class BPMiNer_process implements SCION.State_machine {
         if (BPMiNer.Is_subprocess_(event.attachedToRef))
             click = this._is_collapsed_(event.attachedToRef) ? 'click' : 'dblclick';
         const status = BPMiNer_process._Validate_event(event);
-        if (status.validation.has(Validation.Boundary_event_non_executable_FORK_parallelism)
+        if (status.validation.has(Validation.Boundary_event_implicit_FORK_parallelism)
             || status.validation.has(Validation.Boundary_event_with_incoming_flow)
             || status.validation.has(Validation.Event_Unknown))
             throw new BPMN_error(event, ...Array.from(status.validation));
@@ -2163,7 +2194,7 @@ class BPMiNer_process implements SCION.State_machine {
 
     private _compute_start_event_execution(event: ModdleElement, ...states: SCION.State[]): Event_status {
         const status: Event_status = BPMiNer_process._Validate_event(event);
-        if (status.validation.has(Validation.Start_event_non_executable_FORK_parallelism)
+        if (status.validation.has(Validation.Start_event_implicit_FORK_parallelism)
             || status.validation.has(Validation.Start_event_with_incoming_flow)
             || status.validation.has(Validation.Event_Unknown))
             throw new BPMN_error(event, ...Array.from(status.validation));
@@ -2197,12 +2228,12 @@ class BPMiNer_process implements SCION.State_machine {
     /**
      * End of events
      */
-
     private _create_region_in_parallel(fork: FORK, fork_as_state: SCION.Fork, ...states: Array<SCION.State>): Array<SCION.State> {
         if (BPMiNer.Trace) console.assert(fork_as_state.$type === BPMiNer.Parallel, "'_create_region_in_parallel' >> 'fork_as_state.$type === BPMiNer.Parallel', untrue.");
         // The concept of "region" comes from UML State Machine Diagrams:
         const region_in_parallel: Region_in_parallel = { // Each execution path as parallel region...
             FORK: fork, // This is a marker to keep information about what flow object (e.g., gateway) the region belongs to...
+            parent: fork_as_state,
             states: new Array
         };
         fork_as_state.states!.push(region_in_parallel);
@@ -2321,14 +2352,16 @@ class BPMiNer_process implements SCION.State_machine {
         return status;
     }
 
-    // Utility method for '_join':
+    // Utility method for '_create_and_link_non_visual_state':
     private static _Compute_guards_(join_gateway: Gateway, execution_flow: Sequence_flow, region_in_parallel: Region_in_parallel): Array<string> {
         if (execution_flow.sourceRef!.$type === Gateway_type.BPMN_ParallelGateway && BPMiNer.Is_FORK_gateway_(execution_flow.sourceRef!))
             return new Array();
         if (BPMiNer.Is_FORK_gateway_(execution_flow.sourceRef!))
             return execution_flow.sourceRef!.outgoing!.filter(sequence_flow => sequence_flow !== execution_flow)
                 .map(sequence_flow => BPMiNer.Clean_up_id(BPMiNer.Create_id_for_non_visual_state_machine_element(sequence_flow.targetRef!.id)));
-        return (join_gateway.$type === Gateway_type.BPMN_ComplexGateway || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway)
+        return (join_gateway.$type === Gateway_type.BPMN_ComplexGateway
+            || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway
+            || join_gateway.$type === Gateway_type.BPMN_ParallelGateway)
             ? join_gateway.incoming!.filter(sequence_flow => sequence_flow !== execution_flow) // e.g., excludes 'T1+@T1+' for 'T1+'
                 .map(sequence_flow => {
                     if (sequence_flow.sourceRef !== region_in_parallel.FORK)
@@ -2342,6 +2375,131 @@ class BPMiNer_process implements SCION.State_machine {
             });
     }
 
+    private _create_and_link_non_visual_state(join_gateway: Gateway, execution_flow: Sequence_flow, region_in_parallel: Region_in_parallel): never | void {
+        // 'Exclusive_join.bpmn'
+        // 'Inclusive_join.bpmn'
+        // 'Parallel_join_blah.bpmn'
+        // 'Parallel_join_stupid.bpmn'
+        // 'Train.bpmn'
+        // window.alert("_create_and_link_non_visual_state *** " + BPMiNer.Get_name_when_possible(execution_flow.sourceRef!) + " -> " + BPMiNer.Get_name_when_possible(join_gateway));
+
+        let final_flow_object_as_state = BPMiNer.Get_final_flow_object_as_state(region_in_parallel);
+        if (!final_flow_object_as_state)
+            throw new BPMN_error(execution_flow.sourceRef!, BPMN_error.No_detected_state);
+        if (BPMiNer.Is_activity_wrapping_(final_flow_object_as_state)) { // Error in 'Exclusive_join.bpmn' and 'Parallel_join.bpmn' if no test...
+            final_flow_object_as_state = BPMiNer.Get_state(execution_flow.sourceRef!, final_flow_object_as_state);
+            if (!final_flow_object_as_state)
+                throw new BPMN_error(execution_flow.sourceRef!, BPMN_error.No_detected_state);
+        }
+        const final_flow_object: ModdleElement = this._get_model_element(BPMiNer.Get_original_name(final_flow_object_as_state.id!));
+        const initial_flow_object_as_state: SCION.State = BPMiNer.Get_initial_flow_object_as_state(region_in_parallel);
+        const initial_flow_object: ModdleElement = this._get_model_element(BPMiNer.Get_original_name(initial_flow_object_as_state.id!));
+
+        let non_visual_state_id = BPMiNer.Is_event_based_gateway_(initial_flow_object)
+            ? BPMiNer.Create_id_for_non_visual_state_machine_element(initial_flow_object.id)
+            : BPMiNer.Create_id_for_non_visual_state_machine_element(final_flow_object.id);
+        const extant = region_in_parallel.states.map(state => BPMiNer.Get_original_id(BPMiNer.Clean_up_id(state.id!))).includes(non_visual_state_id);
+        non_visual_state_id = extant
+            //(execution_flow.sourceRef === region_in_parallel.FORK || BPMiNer.Is_FORK_gateway_(execution_flow.sourceRef!))
+            ? BPMiNer.Clean_up_id(BPMiNer.Create_id_for_non_visual_state_machine_element(initial_flow_object.id, join_gateway.id))
+            : non_visual_state_id;
+
+        if (!BPMiNer.Is_non_visual_state_id_(initial_flow_object_as_state.id)
+            || BPMiNer.Is_activity_wrapping_(initial_flow_object_as_state)
+            || BPMiNer.Is_event_based_gateway_(initial_flow_object)) {
+            region_in_parallel.states.push(
+                {
+                    id: non_visual_state_id,
+                    onEntry: () => {
+                        if (BPMiNer.Trace) console.info("\tEntering " + BPMiNer.Create_id_for_non_visual_state_machine_element(BPMiNer.Get_name_when_possible(this._get_model_element(final_flow_object.id))));
+                    },
+                    onExit: () => {
+                        if (BPMiNer.Trace) console.info("\tExiting " + BPMiNer.Create_id_for_non_visual_state_machine_element(BPMiNer.Get_name_when_possible(this._get_model_element(final_flow_object.id))));
+                    }
+                });
+            // 'Train.ts': 'Go_by_train_to_city_C -Go_by_train_to_city_C_2_INCLUSIVE_GATEWAY-> Go_by_train_to_city_C@Go_by_train_to_city_C'
+            // 'Train.ts': 'Reschedule_bus_at_C -Reschedule_bus_at_C_2_INCLUSIVE_GATEWAY-> Reschedule_bus_at_C@Reschedule_bus_at_C'
+            if (extant)
+                initial_flow_object_as_state.transitions!.push({
+                    event: execution_flow.id,
+                    target: non_visual_state_id
+                });
+            else
+                final_flow_object_as_state.transitions!.push({
+                    event: execution_flow.id,
+                    target: non_visual_state_id
+                });
+            const guards = BPMiNer_process._Compute_guards_(join_gateway, execution_flow, region_in_parallel);
+            const non_interruptible_boundary_event_ids = BPMiNer.Get_boundary_events(execution_flow.sourceRef!)
+                .filter(boundary_event => BPMiNer.Is_non_interruptible_boundary_event_(boundary_event))
+                .map(non_interruptible_boundary_event => BPMiNer.Clean_up_id(non_interruptible_boundary_event.id));
+
+            const transition = extant
+                ? BPMiNer.Get_transition(execution_flow.sourceRef!, execution_flow.targetRef!, initial_flow_object_as_state)
+                : BPMiNer.Get_transition(execution_flow.sourceRef!, execution_flow.targetRef!, final_flow_object_as_state);
+            if (!transition)
+                throw new BPMN_error(join_gateway, BPMN_error.No_detected_transition);
+            // 'Train.ts': add guard to 'Reschedule_bus_at_C -Reschedule_bus_at_C_2_INCLUSIVE_GATEWAY-> INCLUSIVE_GATEWAY'
+            transition.cond = (event: SCION.Event): boolean => {
+                const configuration = this.getConfiguration().map(state_id => BPMiNer.Clean_up_id(state_id));
+                let guard: boolean = true;
+                // Are *ALL* non-interruptible boundary events still active?
+                if (join_gateway.$type === Gateway_type.BPMN_ComplexGateway
+                    || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway)
+                    non_interruptible_boundary_event_ids.forEach(non_interruptible_boundary_event_id =>
+                        guard &&= configuration.includes(non_interruptible_boundary_event_id)
+                    );
+                else
+                    guards.forEach(state_id => guard &&= configuration.includes(state_id));
+
+                /** TEST */
+                // let config: string = "";
+                // this.getConfiguration().forEach(state_id => {
+                //     if (!state_id.includes(BPMiNer.Generated_state))
+                //         config += state_id.split(BPMiNer.BPMiNer_Separator)
+                //             .map((state_id: string) => {
+                //                 try {
+                //                     const me = this._get_model_element(state_id);
+                //                     return BPMiNer.Get_name_when_possible(me);
+                //                 } catch (error: unknown) { // 'state_id' is not actually a state id.:
+                //                     return "";
+                //                 }
+                //             })
+                //             .join(BPMiNer.BPMiNer_Separator) + " && ";
+                // });
+                // let cond_: string = "";
+                // guards.forEach(state_id => {
+                //     cond_ += state_id.split(BPMiNer.BPMiNer_Separator)
+                //         .map((state_id: string) => BPMiNer.Get_name_when_possible(this._get_model_element(state_id)))
+                //         .join(BPMiNer.BPMiNer_Separator) + " && ";
+                // });
+                // window.alert("Current state: " + config + "\n\nExpected cond. (may be partial): " + cond_ + "\n\nGuard: " + guard + " ('" + !guard + "' for 'Gateway_type.BPMN_ExclusiveGateway')");
+                /** End of TEST */
+
+                return (join_gateway.$type === Gateway_type.BPMN_ComplexGateway
+                    || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway
+                    || join_gateway.$type === Gateway_type.BPMN_ParallelGateway)
+                    ? guard
+                    : !guard; /* 'Gateway_type.BPMN_ExclusiveGateway' */
+            };
+        }
+    }
+
+    private static __Lookup_state(id: string, states: SCION.State[]): null | SCION.State {
+        let result: null | SCION.State = null;
+        states.forEach(state => {
+            if (!result && 'states' in state) {
+                result = BPMiNer_process.__Lookup_state(id, state.states!);
+                if (result !== null) return result;
+            } else if (!result && state.id && BPMiNer.Clean_up_id(state.id) === id) result = state;
+        });
+        return result;
+    }
+
+    private static _Lookup_state(id: string, region_in_parallel: Region_in_parallel): null | SCION.State {
+        return BPMiNer_process.__Lookup_state(id, region_in_parallel.parent.states!);
+    }
+
     private _join(join_gateway: Gateway, execution_flow: Sequence_flow, states: SCION.State[]): never | SCION.State {
         let region_in_parallel: Region_in_parallel = states.pop() as Region_in_parallel;
         if (BPMiNer.Trace) console.assert(region_in_parallel, "'_join' >> 'region_in_parallel', untrue.");
@@ -2353,8 +2511,12 @@ class BPMiNer_process implements SCION.State_machine {
                 // 'Exclusive_gateway_.bpmn': 'Subprocess'
                 region_in_parallel = states.pop() as Region_in_parallel;
                 if (BPMiNer.Trace) console.assert(region_in_parallel, "'_join' >> 'region_in_parallel', untrue.");
-            } else // 'Exclusive_gateway___.bpmn': 'Activity'
+            } else {
+                // 'Exclusive_join.bpmn'
+                // 'Train.bpmn'
+                this._create_and_link_non_visual_state(join_gateway, execution_flow, region_in_parallel);
                 return states[states.length - 1];
+            }
         }
         // Try to reach superstate:
         while (BPMiNer.Is_gateway_forked_(join_gateway.$type as Gateway_type, states[states.length - 1]))
@@ -2369,9 +2531,12 @@ class BPMiNer_process implements SCION.State_machine {
                 // 'Inclusive_gateway_.bpmn', get 'T1+':
             let final_flow_object_as_state = BPMiNer.Get_final_flow_object_as_state(region_in_parallel);
             if (!final_flow_object_as_state)
-                throw new BPMN_error(join_gateway, BPMN_error.No_detected_state);
+                throw new BPMN_error(execution_flow.sourceRef!, BPMN_error.No_detected_state);
             // If 'final_flow_object_as_state' is wrapping state then get activity state id.:
-            final_flow_object_as_state = BPMiNer.Get_state(execution_flow.sourceRef!, final_flow_object_as_state)!;
+            // if (BPMiNer.Is_activity_wrapping_(final_flow_object_as_state)) // Ce test crée des bogues...
+            final_flow_object_as_state = BPMiNer.Get_state(execution_flow.sourceRef!, final_flow_object_as_state);
+            if (!final_flow_object_as_state)
+                throw new BPMN_error(execution_flow.sourceRef!, BPMN_error.No_detected_state);
             const final_flow_object: ModdleElement = this._get_model_element(BPMiNer.Get_original_name(final_flow_object_as_state.id!));
 
             // 'Inclusive_gateway_.bpmn', get 'T1' (more generally: get first flow object in 'region_in_parallel'):
@@ -2379,18 +2544,21 @@ class BPMiNer_process implements SCION.State_machine {
             // 'Exclusive_gateway_.bpmn', 'Activity_0lqcf36@Loopback' -> 'Activity_0lqcf36'
             const initial_flow_object: ModdleElement = this._get_model_element(BPMiNer.Get_original_name(initial_flow_object_as_state.id!));
 
-            /** 'Event_based_gateway__.bpmn': 'Ebg@Ebg' must be created once and for all... */
-            const non_visual_state_id = BPMiNer.Is_event_based_gateway_(initial_flow_object)
-                ? BPMiNer.Create_id_for_non_visual_state_machine_element(initial_flow_object.id)
-                : BPMiNer.Create_id_for_non_visual_state_machine_element(final_flow_object.id);
-
             /** 'A.2.1.bpmn': 'final_flow_object_as_state' is 'Task 3'
              * while 'initial_flow_object_as_state' is 'Task 2@Task 2'
              */
             if (!BPMiNer.Is_non_visual_state_id_(initial_flow_object_as_state.id)
                 || BPMiNer.Is_activity_wrapping_(initial_flow_object_as_state)
                 || BPMiNer.Is_event_based_gateway_(initial_flow_object)) {
-                if (initial_flow_object.hasOwnProperty('incoming')) { // Mandatory: 'Meeting.bpmn'
+                if (BPMiNer.Is_non_interruptible_boundary_event_(initial_flow_object)) // 'Car_Kogito.bpmn', 'Train.bpmn', 'Train_Kogito.bpmn'
+                    this._create_and_link_non_visual_state(join_gateway, execution_flow, region_in_parallel);
+                if (initial_flow_object.hasOwnProperty('incoming')) { // 'Meeting.bpmn'
+                    if (BPMiNer.Trace) console.assert(!BPMiNer.Is_non_interruptible_boundary_event_(initial_flow_object), "'_join' >> '!BPMiNer.Is_non_interruptible_boundary_event_(initial_flow_object)', untrue.");
+
+                    /** 'Event_based_gateway__.bpmn': 'Ebg@Ebg' must be created once and for all... */
+                    const non_visual_state_id = BPMiNer.Is_event_based_gateway_(initial_flow_object)
+                        ? BPMiNer.Create_id_for_non_visual_state_machine_element(initial_flow_object.id)
+                        : BPMiNer.Create_id_for_non_visual_state_machine_element(final_flow_object.id);
                     /** 'Event_based_gateway__.bpmn': 'Ebg@Ebg' must be created once and for all: */
                     if (!BPMiNer.Is_event_based_gateway_(initial_flow_object) || !BPMiNer.Is_non_visual_state_id_(initial_flow_object_as_state.id)) {
                         // 'Inclusive_gateway_.bpmn', add non-visual state 'T1+@T1+' *BEFORE* 'T1+' (*MUST BE* initial execution state, so 'unshift'):
@@ -2420,7 +2588,13 @@ class BPMiNer_process implements SCION.State_machine {
                     transition.cond = (event: SCION.Event): boolean => {
                         const configuration = this.getConfiguration().map(state_id => BPMiNer.Clean_up_id(state_id));
                         let guard: boolean = true;
-                        guards.forEach(state_id => guard = guard && configuration.includes(state_id)); // e.g., in ['T2@T2','T3@T3']?
+                        if (join_gateway.$type === Gateway_type.BPMN_ComplexGateway
+                            || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway) {
+                            // 'Inclusive_join.bpmn'
+                            guards.filter(state_id => BPMiNer_process._Lookup_state(state_id, region_in_parallel) !== null)
+                                .forEach(state_id => guard &&= configuration.includes(state_id));
+                        } else
+                            guards.forEach(state_id => guard &&= configuration.includes(state_id)); // e.g., in ['T2@T2','T3@T3']?
 
                         /** TEST */
                         // let config: string = "";
@@ -2443,10 +2617,11 @@ class BPMiNer_process implements SCION.State_machine {
                         //         .map((state_id: string) => BPMiNer.Get_name_when_possible(this._get_model_element(state_id)))
                         //         .join(BPMiNer.BPMiNer_Separator) + " && ";
                         // });
-                        // alert("Active conf.: " + config + "\n\nExpected cond.: " + cond_ + "\n\nGuard: " + guard + " ('false' for 'Gateway_type.BPMN_ExclusiveGateway')");
+                        // window.alert("Active conf.: " + config + "\n\nExpected cond. (may be partial): " + cond_ + "\n\nGuard: " + guard + " ('" + !guard + "' for 'Gateway_type.BPMN_ExclusiveGateway')");
                         /** End of TEST */
 
-                        return (join_gateway.$type === Gateway_type.BPMN_ComplexGateway || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway)
+                        return (join_gateway.$type === Gateway_type.BPMN_ComplexGateway
+                            || join_gateway.$type === Gateway_type.BPMN_InclusiveGateway)
                             ? guard
                             : !guard; /* 'Gateway_type.BPMN_ExclusiveGateway' */
                     };
@@ -2505,7 +2680,7 @@ class BPMiNer_process implements SCION.State_machine {
                         //         .map((state_id: string) => BPMiNer.Get_name_when_possible(this._get_model_element(state_id)))
                         //         .join(BPMiNer.BPMiNer_Separator) + " && ";
                         // });
-                        // alert("Active conf.: " + config + "\n\nExpected cond.: " + cond_ + "\n\nGuard: " + guard);
+                        // window.alert("Active conf.: " + config + "\n\nExpected cond.: " + cond_ + "\n\nGuard: " + guard);
                         /** End of TEST */
 
                         return guard;
@@ -2562,7 +2737,7 @@ class BPMiNer_process implements SCION.State_machine {
 
     private _join_parallel(join_gateway: Gateway, execution_flow: Sequence_flow, states: SCION.State[]): never | SCION.State {
         let region_in_parallel: Region_in_parallel = states.pop() as Region_in_parallel;
-        if (BPMiNer.Trace) console.assert(region_in_parallel, "'_join' >> 'region_in_parallel', untrue.");
+        if (BPMiNer.Trace) console.assert(region_in_parallel, "'_join_parallel' >> 'region_in_parallel', untrue.");
         if (!BPMiNer.Is_region_in_parallel_(region_in_parallel))
             throw new BPMN_error(join_gateway, BPMN_error.No_detected_region_in_parallel);
 
@@ -2571,8 +2746,10 @@ class BPMiNer_process implements SCION.State_machine {
                 // 'Parallel_gateway__.bpmn': 'Subprocess'
                 region_in_parallel = states.pop() as Region_in_parallel;
                 if (BPMiNer.Trace) console.assert(region_in_parallel, "'_join' >> 'region_in_parallel', untrue.");
-            } else // 'Car.bpmn': 'Drive'
+            } else {
+                this._create_and_link_non_visual_state(join_gateway, execution_flow, region_in_parallel);
                 return states[states.length - 1];
+            }
         }
         // Try to reach superstate:
         while (BPMiNer.Is_gateway_forked_(Gateway_type.BPMN_ParallelGateway, states[states.length - 1]))
@@ -2591,9 +2768,14 @@ class BPMiNer_process implements SCION.State_machine {
                 // 'Parallel_gateway_.bpmn', get 'T1+':
             let final_flow_object_as_state = BPMiNer.Get_final_flow_object_as_state(region_in_parallel);
             if (!final_flow_object_as_state)
-                throw new BPMN_error(join_gateway, BPMN_error.No_detected_state);
+                throw new BPMN_error(execution_flow.sourceRef!, BPMN_error.No_detected_state);
             // If 'final_flow_object_as_state' is wrapping state then get activity state id.:
-            final_flow_object_as_state = BPMiNer.Get_state(execution_flow.sourceRef!, final_flow_object_as_state)!;
+            final_flow_object_as_state = BPMiNer.Get_state(execution_flow.sourceRef!, final_flow_object_as_state);
+            if (!final_flow_object_as_state) { // 'Event_based_gateway_.bpmn'
+                final_flow_object_as_state = BPMiNer.Get_state(execution_flow.sourceRef!, region_in_parallel);
+                if (!final_flow_object_as_state)
+                    throw new BPMN_error(execution_flow.sourceRef!, BPMN_error.No_detected_state);
+            }
             // Add non-visual state *AFTER* 'T1+':
             const non_visual_state_id = BPMiNer.Create_id_for_non_visual_state_machine_element(final_flow_object_as_state.id); // e.g., 'T1+@T1+'
             region_in_parallel.states.push({
@@ -2643,7 +2825,7 @@ class BPMiNer_process implements SCION.State_machine {
                     //         .map(state_id => BPMiNer.Get_name_when_possible(this._get_model_element(state_id)))
                     //         .join(BPMiNer.BPMiNer_Separator) + " && ";
                     // });
-                    // alert("Active conf.: " + config + "\n\n" + "Expected cond.: " + cond_ + "\n\nGuard: " + guard);
+                    // window.alert("Active conf.: " + config + "\n\n" + "Expected cond.: " + cond_ + "\n\nGuard: " + guard);
                     /** End of TEST */
 
                     return !guard;
@@ -2696,7 +2878,7 @@ class BPMiNer_process implements SCION.State_machine {
                         //         .map(state_id => BPMiNer.Get_name_when_possible(this._get_model_element(state_id)))
                         //         .join(BPMiNer.BPMiNer_Separator) + " && ";
                         // });
-                        // alert("Active conf.: " + config + "\n\n" + "Expected cond.: " + cond_ + "\n\nGuard: " + guard);
+                        // window.alert("Active conf.: " + config + "\n\n" + "Expected cond.: " + cond_ + "\n\nGuard: " + guard);
                         /** End of TEST */
 
                         return guard;
@@ -2979,29 +3161,22 @@ class BPMiNer_process implements SCION.State_machine {
         switch (type) {
             case Event_type.BPMN_EndEvent:
                 return this._compute_end_event_execution(me, ...states);
-                break;
             case Event_type.BPMN_IntermediateCatchEvent:
             case Event_type.BPMN_IntermediateThrowEvent:
                 return this._compute_intermediate_event_execution(me, ...states);
-                break;
             case Event_type.BPMN_StartEvent:
                 // This is not a seq. flow, but its target:
                 return this._compute_start_event_execution(me, ...states);
-                break;
             case Gateway_type.BPMN_EventBasedGateway: // "Exclusive" versus "Parallel"?
                 return this._compute_event_based_gateway_execution(me as Event_based_gateway, ...states);
-                break;
             case Gateway_type.BPMN_ExclusiveGateway:
                 return this._compute_exclusive_gateway_execution(me, ...states);
-                break;
             // Complex gateways behave somehow like inclusive gateways (OMG BPMN spec., ver. 2.0.2, p. 294):
             case Gateway_type.BPMN_ComplexGateway:
             case Gateway_type.BPMN_InclusiveGateway:
                 return this._compute_inclusive_gateway_execution(me, ...states);
-                break;
             case Gateway_type.BPMN_ParallelGateway:
                 return this._compute_parallel_gateway_execution(me, ...states);
-                break;
             case Activity_type.BPMN_BusinessRuleTask:
             case Activity_type.BPMN_CallActivity:
             case Activity_type.BPMN_ManualTask:
@@ -3012,7 +3187,6 @@ class BPMiNer_process implements SCION.State_machine {
             case Activity_type.BPMN_Task:
             case Activity_type.BPMN_UserTask:
                 return this._compute_activity_execution(me, ...states);
-                break;
             case Activity_type.BPMN_SubProcess:
             case Activity_type.BPMN_Transaction:
                 const id = is_start_activity_ ? me.id : me.targetRef!.id;
@@ -3020,7 +3194,6 @@ class BPMiNer_process implements SCION.State_machine {
                 if (this._embedded_subprocesses.get(id) === undefined)
                     this._embedded_subprocesses.set(id, new BPMiNer_process(embedded_subprocess as Process, this._message_flows));
                 return this._compute_activity_execution(me, ...states);
-                break;
             default:
                 throw new BPMN_error(me, BPMN_error.BPMN_element_type_is_not_supported, type);
         }
@@ -3051,8 +3224,12 @@ class BPMiNer_process implements SCION.State_machine {
                 // Disable all *INTERRUPTING* (except current interrupting event subprocess) event subprocesses:
                 this._event_subprocesses.forEach((value: BPMiNer_process, key: string) => {
                     if (!(BPMiNer.Is_interruptible_event_subprocess_(value._process)
-                        && (event as CustomEvent<{ event_subprocess: Process }>).detail.event_subprocess !== undefined
-                        && key === BPMiNer.Get_original_id((event as CustomEvent<{ event_subprocess: Process }>).detail.event_subprocess.id)))
+                        && (event as CustomEvent<{
+                            event_subprocess: Process
+                        }>).detail.event_subprocess !== undefined
+                        && key === BPMiNer.Get_original_id((event as CustomEvent<{
+                            event_subprocess: Process
+                        }>).detail.event_subprocess.id)))
                         BPMiNer.Terminate_process(value._process);
                 });
                 if (BPMiNer.Trace) console.warn(BPMiNer.Get_name_when_possible(this._process) + " TERMINATED");
@@ -3066,11 +3243,15 @@ class BPMiNer_process implements SCION.State_machine {
                     .map(id => BPMiNer.Get_original_id(id));
                 this._process.flowElements.filter(me => BPMiNer.Is_FORK_gateway_(me) && configuration.includes(BPMiNer.Get_original_id(me.id)))
                     .forEach(gateway => {
-                        if (BPMiNer.Compute_transitive_closure(gateway).has((event as CustomEvent<{ event: Event }>).detail.event))
+                        if (BPMiNer.Compute_transitive_closure(gateway).has((event as CustomEvent<{
+                            event: Event
+                        }>).detail.event))
                             configuration.splice(configuration.indexOf(BPMiNer.Get_original_id(gateway.id)), 1);
                     });
                 // The BPMN end event has been reached ('isIn' equals to 'true'):
-                if (BPMiNer.Trace) console.assert(configuration.includes(BPMiNer.Get_original_id((event as CustomEvent<{ event: Event }>).detail.event.id)));
+                if (BPMiNer.Trace) console.assert(configuration.includes(BPMiNer.Get_original_id((event as CustomEvent<{
+                    event: Event
+                }>).detail.event.id)));
                 const termination = configuration.every(id => this._process.flowElements.filter(me => me.$type === Event_type.BPMN_EndEvent)
                     .map(event => BPMiNer.Get_original_id(event.id)).includes(id));
                 if (termination) {
@@ -3080,10 +3261,23 @@ class BPMiNer_process implements SCION.State_machine {
                     if (BPMiNer.Is_interruptible_event_subprocess_(this._process))
                         this._process.$parent.outgoing?.forEach((sequence_flow: Sequence_flow) => BPMiNer.Get_SVGGElement(sequence_flow.id).dispatchEvent(new Event('dblclick')));
                 }
-                if (BPMiNer.Trace) console.warn(BPMiNer.Get_name_when_possible(this._process) + " ENDED with termination? " + termination + " from: " + BPMiNer.Get_name_when_possible((event as CustomEvent<{ event: Event }>).detail.event));
+                if (BPMiNer.Trace) console.warn(BPMiNer.Get_name_when_possible(this._process) + " ENDED with termination? " + termination + " from: " + BPMiNer.Get_name_when_possible((event as CustomEvent<{
+                    event: Event
+                }>).detail.event));
             });
         });
         const start_events: Array<Event> = this._process.flowElements.filter(me => me.$type === Event_type.BPMN_StartEvent);
+
+        this._process.flowElements.filter(me => BPMiNer.Is_event_subprocess_(me))
+            .forEach(event_subprocess => this._event_subprocesses.set(event_subprocess.id, new BPMiNer_process(event_subprocess as Process, this._message_flows)));
+        this._process.flowElements.filter(me => BPMiNer.Is_event_subprocess_(me) && BPMiNer.Is_interruptible_event_subprocess_(me as Process))
+            .forEach(interruptible_event_subprocess => {
+                BPMiNer.Record_listener(interruptible_event_subprocess.id, (event) => {
+                    this._process.outgoing?.forEach(sequence_flow => // Non-satisfactory, this may only be partial end of event subprocess:
+                        BPMiNer.Get_SVGGElement(sequence_flow.id).dispatchEvent(new Event('dblclick')));
+                });
+            });
+
         if (start_events.length === 0) {
             if (BPMiNer.Is_event_subprocess_(this._process))
                 throw new BPMN_error(this._process, BPMN_error.Event_subprocess_must_have_one_and_only_one_start_event);
@@ -3094,15 +3288,6 @@ class BPMiNer_process implements SCION.State_machine {
             else
                 BPMiNer.Warn(this._process, Validation.No_start_point);
         } else {
-            this._process.flowElements.filter(me => BPMiNer.Is_event_subprocess_(me))
-                .forEach(event_subprocess => this._event_subprocesses.set(event_subprocess.id, new BPMiNer_process(event_subprocess as Process, this._message_flows)));
-            this._process.flowElements.filter(me => BPMiNer.Is_event_subprocess_(me) && BPMiNer.Is_interruptible_event_subprocess_(me as Process))
-                .forEach(interruptible_event_subprocess => {
-                    BPMiNer.Record_listener(interruptible_event_subprocess.id, (event) => {
-                        this._process.outgoing?.forEach(sequence_flow => // Non-satisfactory, this may only be partial end of event subprocess:
-                            BPMiNer.Get_SVGGElement(sequence_flow.id).dispatchEvent(new Event('dblclick')));
-                    });
-                });
             if (start_events.length > 1) {
                 if (BPMiNer.Is_event_subprocess_(this._process))
                     throw new BPMN_error(this._process, BPMN_error.Event_subprocess_must_have_one_and_only_one_start_event);

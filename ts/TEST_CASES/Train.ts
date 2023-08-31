@@ -1,99 +1,109 @@
-const BOUNDARY_EVENTS = require("scion-core");
-const state_machine = new BOUNDARY_EVENTS.Statechart(
+const TRAIN = require("scion-core");
+const TRAIN_state_machine = new TRAIN.Statechart(
     {
-        id: 'TEST',
+        id: 'TRAIN',
         states: [
             {
-                id: 'X@Loopback',
-                onExit: () => {
-                    console.log("\tExiting 'X@Loopback'... ");
-                },
+                id: 'Go_by_train_to_city_C@Loopback',
                 transitions: [
                     {
                         event: 'loopback',
-                        target: 'X@Loopback'
+                        target: 'Go_by_train_to_city_C@Loopback'
                     }
                 ],
                 $type: 'parallel',
                 states: [
                     {
-                        id: 'R1',
+                        id: 'RIP_Go_by_train_to_city_C',
                         states: [
                             {
-                                id: 'X',
-                                states: [
-                                    {
-                                        id: 'Interrup.',
-                                        transitions: [
-                                            {
-                                                event: 'a',
-                                                target: 'A'
-                                            }
-                                        ]
-                                    }
-                                ],
+                                id: 'Go_by_train_to_city_C',
                                 transitions: [
                                     {
-                                        event: 'c',
-                                        target: 'C'
-                                    }],
+                                        /**
+                                         * 'cond': le chemin d'exécution potentiel parallèle induit par l'événement
+                                         * non-interruptible (frontière) 'Delay' *N'A PAS* été activé...
+                                         */
+                                        cond: (): boolean => TRAIN_state_machine.isIn('Reschedule_bus_at_C@Reschedule_bus_at_C')
+                                            // All non-interruptible (boundary) events still active:
+                                            || TRAIN_state_machine.isIn('Delay'),
+                                        event: 'Go_by_train_to_city_C_2_INCLUSIVE_GATEWAY',
+                                        target: 'INCLUSIVE_GATEWAY'
+                                    },
+                                    {   // Attention, transition par défaut si la précédente est 'false' :
+                                        event: 'Go_by_train_to_city_C_2_INCLUSIVE_GATEWAY',
+                                        target: 'Go_by_train_to_city_C@Go_by_train_to_city_C'
+                                    }
+                                ]
                             },
                             {
-                                id: 'A'
-                            },
-                            {
-                                id: 'C'
+                                id: 'Go_by_train_to_city_C@Go_by_train_to_city_C'
                             }
                         ]
                     },
                     {
-                        id: 'R2',
+                        id: 'RIP_JOINABLE',
                         states: [
                             {
-                                id: 'Non-interrup.',
+                                id: 'Delay',
                                 transitions: [
                                     {
-                                        event: 'a',
-                                        target: 'Non-interrup.@Non-interrup.'
-                                    },
-                                    {
-                                        event: 'c',
-                                        target: 'Non-interrup.@bpmn:BoundaryEvent'
-                                    },
-                                    {
-                                        event: 'b',
-                                        target: 'B'
+                                        event: 'Delay_2_Reschedule_bus_at_C',
+                                        target: 'Reschedule_bus_at_C'
                                     }
                                 ]
                             },
                             {
-                                id: 'Non-interrup.@bpmn:BoundaryEvent',
+                                id: 'Reschedule_bus_at_C',
                                 transitions: [
                                     {
-                                        event: 'b',
-                                        target: 'B'
+                                        cond: (): boolean => TRAIN_state_machine.isIn('Go_by_train_to_city_C@Go_by_train_to_city_C'),
+                                        event: 'Reschedule_bus_at_C_2_INCLUSIVE_GATEWAY',
+                                        target: 'INCLUSIVE_GATEWAY'
+                                    },
+                                    { // Attention, transition par défaut si la précédente est 'false' :
+                                        event: 'Reschedule_bus_at_C_2_INCLUSIVE_GATEWAY',
+                                        target: 'Reschedule_bus_at_C@Reschedule_bus_at_C'
                                     }
                                 ]
                             },
                             {
-                                id: "B"
+                                id: 'Reschedule_bus_at_C@Reschedule_bus_at_C'
                             }
                         ]
                     }
                 ]
+            },
+            {
+                id: 'INCLUSIVE_GATEWAY'
             }
         ]
     }
 );
 
-state_machine.start();
-console.log('Initial: ' + state_machine.getFullConfiguration());
-state_machine.gen('b');
-// console.log("'b' sent: " + state_machine.getFullConfiguration());
-state_machine.gen('a');
-console.log("'a' sent: " + state_machine.getFullConfiguration());
-state_machine.gen('loopback');
-console.log("'loopback' sent: " + state_machine.getFullConfiguration());
+// console.info("\t\t*** Scenario #0");
+// TRAIN_state_machine.start();
+// TRAIN_state_machine.gen('Go_by_train_to_city_C_2_INCLUSIVE_GATEWAY');
+// console.log("0. Scenario #0 (succès) -> " + TRAIN_state_machine.getConfiguration());
+
+console.info("\t\t*** Scenario #1");
+TRAIN_state_machine.start();
+TRAIN_state_machine.gen('Delay_2_Reschedule_bus_at_C');
+console.log("1. On a quitté 'Delay' -> " + TRAIN_state_machine.getConfiguration());
+TRAIN_state_machine.gen('Go_by_train_to_city_C_2_INCLUSIVE_GATEWAY');
+console.log("2. On veut quitter 'Go by train to city C' (échec) -> " + TRAIN_state_machine.getConfiguration());
+TRAIN_state_machine.gen('Reschedule_bus_at_C_2_INCLUSIVE_GATEWAY');
+console.log("3. On veut quitter 'Reschedule bus at C' (succès) -> " + TRAIN_state_machine.getConfiguration());
+
+console.info("\t\t*** Scenario #2");
+TRAIN_state_machine.start();
+TRAIN_state_machine.gen('Delay_2_Reschedule_bus_at_C');
+console.log("1. On a quitté 'Delay' -> " + TRAIN_state_machine.getConfiguration());
+TRAIN_state_machine.gen('Reschedule_bus_at_C_2_INCLUSIVE_GATEWAY');
+console.log("2. On veut quitter 'Reschedule bus at C' (échec) -> " + TRAIN_state_machine.getConfiguration());
+TRAIN_state_machine.gen('Go_by_train_to_city_C_2_INCLUSIVE_GATEWAY');
+console.log("3. On veut quitter 'Go by train to city C' (succès) -> " + TRAIN_state_machine.getConfiguration());
+
 
 
 
