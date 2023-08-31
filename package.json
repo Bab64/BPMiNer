@@ -1,7 +1,7 @@
 {
   "author": "Barbier--Darnal informatique - B--Di",
   "description": "BPMN 2.x model execution",
-  "license": "All rights reserved",
+  "license": "MIT",
   "main": "js/LiveBPMN.js",
   "name": "BPMiNer",
   "repository": {
