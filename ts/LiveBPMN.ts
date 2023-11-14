@@ -35,12 +35,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.document.body.addEventListener(BPMiNer.Reload, () => {
         new BPMiNer(window.history.state.XML, true).execute().catch(error => window.alert("LiveBPMN: " + error));
     });
-    BPMiNer.Set_current_test_case({
-        index: 0,
-        name: "LiveBPMN",
-        XML: await (new BPMiNer("./TEST_CASES/LiveBPMN.bpmn")).XML
-    });
-    window.document.body.dispatchEvent(new Event(BPMiNer.Reload));
+    // BPMiNer.Set_current_test_case({
+    //     index: 0,
+    //     name: "LiveBPMN",
+    //     XML: await (new BPMiNer("./TEST_CASES/LiveBPMN.bpmn")).XML
+    // });
+    // window.document.body.dispatchEvent(new Event(BPMiNer.Reload));
+
+    (new BPMiNer('./TEST_CASES/KUL.bpmn')).execute();
 
     /** Implicit parallelism (not handled) */
     // (new BPMiNer('./TEST_CASES/Implicit_parallelism/Implicit_parallelism.bpmn')).execute(); // Bug: visual problem on sequence flow

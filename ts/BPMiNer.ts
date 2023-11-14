@@ -2503,8 +2503,19 @@ class BPMiNer_process implements SCION.State_machine {
     private _join(join_gateway: Gateway, execution_flow: Sequence_flow, states: SCION.State[]): never | SCION.State {
         let region_in_parallel: Region_in_parallel = states.pop() as Region_in_parallel;
         if (BPMiNer.Trace) console.assert(region_in_parallel, "'_join' >> 'region_in_parallel', untrue.");
-        if (!BPMiNer.Is_region_in_parallel_(region_in_parallel))
+        if (!BPMiNer.Is_region_in_parallel_(region_in_parallel)) {
+            /**
+             * Ver. 1.0.6, 'KUL.bpmn'
+             */
+            if (join_gateway.$type === Gateway_type.BPMN_ExclusiveGateway) {
+                states.push(region_in_parallel);
+                return states[states.length - 1]; // 'region_in_parallel' is probably the process itself
+            }
+            /**
+             * End of ver. 1.0.6, 'KUL.bpmn'
+             */
             throw new BPMN_error(join_gateway, BPMN_error.No_detected_region_in_parallel);
+        }
 
         if (execution_flow.sourceRef === region_in_parallel.FORK && BPMiNer.Is_activity_forked_(region_in_parallel)) {
             if (BPMiNer.Is_region_in_parallel_(states[states.length - 1])) {
