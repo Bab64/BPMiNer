@@ -42,7 +42,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // });
     // window.document.body.dispatchEvent(new Event(BPMiNer.Reload));
 
-    (new BPMiNer('./TEST_CASES/KUL.bpmn')).execute();
+    (new BPMiNer('./TEST_CASES/LiveBPMN.bpmn')).execute();
 
     /** Implicit parallelism (not handled) */
     // (new BPMiNer('./TEST_CASES/Implicit_parallelism/Implicit_parallelism.bpmn')).execute(); // Bug: visual problem on sequence flow
