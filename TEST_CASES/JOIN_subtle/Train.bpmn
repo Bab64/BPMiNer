@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns="http://www.omg.org/bpmn20" xmlns:bpsim="http://www.bpsim.org/schemas/1.0" xmlns:drools="http://www.jboss.org/drools" id="_QDn0sLH0Ee25sYtfLGfZtA" targetNamespace="http://www.omg.org/bpmn20" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="12.0.0" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd http://www.jboss.org/drools drools.xsd http://www.bpsim.org/schemas/1.0 bpsim.xsd http://www.omg.org/spec/DD/20100524/DC DC.xsd http://www.omg.org/spec/DD/20100524/DI DI.xsd ">
+  <bpmn2:process id="Train" name="Train" processType="Public" isExecutable="true" drools:packageName="com.franckbarbier.train" drools:version="1.0" drools:adHoc="false">
+    <bpmn2:sequenceFlow id="_6938977D-4E7B-46D0-8E92-10F4A96F2D0C" sourceRef="START" targetRef="Go_by_train_to_city_C">
+      <bpmn2:extensionElements>
+        <drools:metaData name="isAutoConnection.target">
+          <drools:metaValue>true</drools:metaValue>
+        </drools:metaData>
+      </bpmn2:extensionElements>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="_AA9C8C60-F51C-4C0B-B897-6A7E7A85D19B" sourceRef="INCLUSIVE_GATEWAY" targetRef="_1A808679-37CE-46BF-84BF-9942663240D1" />
+    <bpmn2:sequenceFlow id="Reschedule_bus_2_INCLUSIVE_GATEWAY" sourceRef="Reschedule_bus_at_C" targetRef="INCLUSIVE_GATEWAY" />
+    <bpmn2:sequenceFlow id="Go_by_train_2_INCLUSIVE_GATEWAY" sourceRef="Go_by_train_to_city_C" targetRef="INCLUSIVE_GATEWAY" />
+    <bpmn2:sequenceFlow id="Delay_2_Reschedule_bus" sourceRef="Delay" targetRef="Reschedule_bus_at_C" />
+    <bpmn2:task id="Go_by_train_to_city_C" name="Go by train to city C">
+      <bpmn2:extensionElements>
+        <drools:metaData name="elementname">
+          <drools:metaValue>Go by train to city C</drools:metaValue>
+        </drools:metaData>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>_6938977D-4E7B-46D0-8E92-10F4A96F2D0C</bpmn2:incoming>
+      <bpmn2:outgoing>Go_by_train_2_INCLUSIVE_GATEWAY</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:task id="Reschedule_bus_at_C" name="Reschedule bus at C">
+      <bpmn2:extensionElements>
+        <drools:metaData name="elementname">
+          <drools:metaValue>Reschedule bus at C</drools:metaValue>
+        </drools:metaData>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Delay_2_Reschedule_bus</bpmn2:incoming>
+      <bpmn2:outgoing>Reschedule_bus_2_INCLUSIVE_GATEWAY</bpmn2:outgoing>
+    </bpmn2:task>
+    <bpmn2:endEvent id="_1A808679-37CE-46BF-84BF-9942663240D1">
+      <bpmn2:incoming>_AA9C8C60-F51C-4C0B-B897-6A7E7A85D19B</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:startEvent id="START">
+      <bpmn2:outgoing>_6938977D-4E7B-46D0-8E92-10F4A96F2D0C</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:inclusiveGateway id="INCLUSIVE_GATEWAY" name="INCLUSIVE GATEWAY" gatewayDirection="Converging">
+      <bpmn2:incoming>Go_by_train_2_INCLUSIVE_GATEWAY</bpmn2:incoming>
+      <bpmn2:incoming>Reschedule_bus_2_INCLUSIVE_GATEWAY</bpmn2:incoming>
+      <bpmn2:outgoing>_AA9C8C60-F51C-4C0B-B897-6A7E7A85D19B</bpmn2:outgoing>
+    </bpmn2:inclusiveGateway>
+    <bpmn2:boundaryEvent id="Delay" name="Delay" cancelActivity="false" attachedToRef="Go_by_train_to_city_C" drools:dockerinfo="126.0^66.0|" drools:boundaryca="false">
+      <bpmn2:extensionElements>
+        <drools:metaData name="elementname">
+          <drools:metaValue>Delay</drools:metaValue>
+        </drools:metaData>
+      </bpmn2:extensionElements>
+      <bpmn2:outgoing>Delay_2_Reschedule_bus</bpmn2:outgoing>
+      <bpmn2:escalationEventDefinition id="_QDn0sbH0Ee25sYtfLGfZtA" />
+    </bpmn2:boundaryEvent>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="_QDn0srH0Ee25sYtfLGfZtA">
+    <bpmndi:BPMNPlane id="_QDn0s7H0Ee25sYtfLGfZtA" bpmnElement="Train">
+      <bpmndi:BPMNShape id="shape__A02043E1-70C8-4F13-8604-4A8EA4E2DC88" bpmnElement="Go_by_train_to_city_C">
+        <dc:Bounds x="223" y="199" width="154" height="102" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape__DE2F8DB5-B403-47C4-8617-0B951CA7A104" bpmnElement="Reschedule_bus_at_C">
+        <dc:Bounds x="433" y="409" width="154" height="102" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape__1A808679-37CE-46BF-84BF-9942663240D1" bpmnElement="_1A808679-37CE-46BF-84BF-9942663240D1">
+        <dc:Bounds x="682" y="121" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape__26A22F52-A120-408C-B537-3312776741F5" bpmnElement="START">
+        <dc:Bounds x="112" y="222" width="56" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_FLOW_FUSION" bpmnElement="INCLUSIVE_GATEWAY">
+        <dc:Bounds x="482" y="121" width="56" height="56" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="474" y="97" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape__CDAE470C-1ED0-4E8C-8404-A2DD16BFA403" bpmnElement="Delay">
+        <dc:Bounds x="349" y="265" width="56" height="56" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="415" y="286" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="edge_shape__26A22F52-A120-408C-B537-3312776741F5_to_shape__A02043E1-70C8-4F13-8604-4A8EA4E2DC88" bpmnElement="_6938977D-4E7B-46D0-8E92-10F4A96F2D0C">
+        <di:waypoint x="168" y="250" />
+        <di:waypoint x="223" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_shape_FLOW_FUSION_to_shape__D1435F6A-9D54-4074-8493-5928E7738F9C" bpmnElement="_AA9C8C60-F51C-4C0B-B897-6A7E7A85D19B">
+        <di:waypoint x="538" y="149" />
+        <di:waypoint x="682" y="149" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_shape__DE2F8DB5-B403-47C4-8617-0B951CA7A104_to_shape_FLOW_FUSION" bpmnElement="Reschedule_bus_2_INCLUSIVE_GATEWAY">
+        <di:waypoint x="510" y="409" />
+        <di:waypoint x="510" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_shape__A02043E1-70C8-4F13-8604-4A8EA4E2DC88_to_shape_FLOW_FUSION" bpmnElement="Go_by_train_2_INCLUSIVE_GATEWAY">
+        <di:waypoint x="300" y="199" />
+        <di:waypoint x="300" y="149" />
+        <di:waypoint x="482" y="149" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_shape__CDAE470C-1ED0-4E8C-8404-A2DD16BFA403_to_shape__DE2F8DB5-B403-47C4-8617-0B951CA7A104" bpmnElement="Delay_2_Reschedule_bus">
+        <di:waypoint x="377" y="321" />
+        <di:waypoint x="377" y="460" />
+        <di:waypoint x="433" y="460" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmn2:relationship id="_QDn0tLH0Ee25sYtfLGfZtA" type="BPSimData">
+    <bpmn2:extensionElements>
+      <bpsim:BPSimData>
+        <bpsim:Scenario id="default" name="Simulationscenario">
+          <bpsim:ScenarioParameters />
+          <bpsim:ElementParameters elementRef="START" id="_QDn0tbH0Ee25sYtfLGfZtA">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:NormalDistribution mean="0.0" standardDeviation="0.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="_D1435F6A-9D54-4074-8493-5928E7738F9C" id="_QDn0trH0Ee25sYtfLGfZtA">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:NormalDistribution mean="0.0" standardDeviation="0.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+            <bpsim:ResourceParameters>
+              <bpsim:Availability>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Availability>
+              <bpsim:Quantity>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Quantity>
+            </bpsim:ResourceParameters>
+            <bpsim:CostParameters>
+              <bpsim:UnitCost>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:UnitCost>
+            </bpsim:CostParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="Reschedule_bus_at_C" id="_QDn0t7H0Ee25sYtfLGfZtA">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:NormalDistribution mean="0.0" standardDeviation="0.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+            <bpsim:ResourceParameters>
+              <bpsim:Availability>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Availability>
+              <bpsim:Quantity>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Quantity>
+            </bpsim:ResourceParameters>
+            <bpsim:CostParameters>
+              <bpsim:UnitCost>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:UnitCost>
+            </bpsim:CostParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="Go_by_train_to_city_C" id="_QDn0uLH0Ee25sYtfLGfZtA">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:NormalDistribution mean="0.0" standardDeviation="0.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+            <bpsim:ResourceParameters>
+              <bpsim:Availability>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Availability>
+              <bpsim:Quantity>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Quantity>
+            </bpsim:ResourceParameters>
+            <bpsim:CostParameters>
+              <bpsim:UnitCost>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:UnitCost>
+            </bpsim:CostParameters>
+          </bpsim:ElementParameters>
+          <bpsim:ElementParameters elementRef="_F898518B-B39B-423C-A2F7-FCA05F882371" id="_QDn0ubH0Ee25sYtfLGfZtA">
+            <bpsim:TimeParameters>
+              <bpsim:ProcessingTime>
+                <bpsim:NormalDistribution mean="0.0" standardDeviation="0.0" />
+              </bpsim:ProcessingTime>
+            </bpsim:TimeParameters>
+            <bpsim:ResourceParameters>
+              <bpsim:Availability>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Availability>
+              <bpsim:Quantity>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:Quantity>
+            </bpsim:ResourceParameters>
+            <bpsim:CostParameters>
+              <bpsim:UnitCost>
+                <bpsim:FloatingParameter value="0.0" />
+              </bpsim:UnitCost>
+            </bpsim:CostParameters>
+          </bpsim:ElementParameters>
+        </bpsim:Scenario>
+      </bpsim:BPSimData>
+    </bpmn2:extensionElements>
+    <bpmn2:source>_QDn0sLH0Ee25sYtfLGfZtA</bpmn2:source>
+    <bpmn2:target>_QDn0sLH0Ee25sYtfLGfZtA</bpmn2:target>
+  </bpmn2:relationship>
+</bpmn2:definitions>

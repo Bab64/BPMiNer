@@ -1,0 +1,40 @@
+{
+  "author": "Barbier--Darnal informatique - B--Di",
+  "description": "BPMN 2.x model execution",
+  "license": "MIT",
+  "main": "js/LiveBPMN.js",
+  "name": "BPMiNer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bab64/BPMiNer.git"
+  },
+  "version": "1.0.8",
+  "scripts": {
+    "clean": "rimraf js node_modules package-lock.json",
+    "configuration": "npx tsc --showConfig",
+    "compilation": "npx tsc",
+    "save": "git add . && git commit -a -m \"April 17, 2025\" && git remote && git push",
+    "BOUNDARY_EVENTS": "node js/TEST_CASES/Boundary_events",
+    "CYCLE": "node js/TEST_CASES/Cycle_from_exclusiveGateway",
+    "INCLUSIVE": "node js/TEST_CASES/Inclusive_gateway",
+    "PARALLEL": "node js/TEST_CASES/Parallel_gateway",
+    "TEST_CASE_1": "node js/TEST_CASES/TEST_CASE_1",
+    "TEST_CASE_1a": "node js/TEST_CASES/TEST_CASE_1a",
+    "TEST_CASE_1b": "node js/TEST_CASES/TEST_CASE_1b",
+    "TEST_CASE_2a": "node js/TEST_CASES/TEST_CASE_2a",
+    "TEST_CASE_3": "node js/TEST_CASES/TEST_CASE_3",
+    "TEST_CASE_3a": "node js/TEST_CASES/TEST_CASE_3a",
+    "TRAIN": "node js/TEST_CASES/TRAIN"
+  },
+  "dependencies": {
+    "bpmn-js": "^8.10.0",
+    "bpmn-moddle": "^8.1.0",
+    "scion-core": "^1.5.5",
+    "tippy.js": "^6.3.7"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.86",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  }
+}
