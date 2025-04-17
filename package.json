@@ -14,7 +14,7 @@
     "configuration": "npx tsc --showConfig",
     "compilation": "npx tsc",
     "git-init": "git init && git remote add BPMiNer https://github.com/Bab64/BPMiNer.git",
-    "save": "git add . && git commit -a -m \"April 17, 2025\" && git remote && git push BPMiNer --force",
+    "save": "git add . && git commit -a -m \"April 17, 2025\" && git remote && git push",
     "BOUNDARY_EVENTS": "node js/TEST_CASES/Boundary_events",
     "CYCLE": "node js/TEST_CASES/Cycle_from_exclusiveGateway",
     "INCLUSIVE": "node js/TEST_CASES/Inclusive_gateway",
